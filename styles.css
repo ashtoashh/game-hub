@@ -1,0 +1,100 @@
+:root {
+  color-scheme: light dark;
+  --bg: #0f1115;
+  --surface: #1a1d26;
+  --surface-hover: #232733;
+  --text: #f0f1f5;
+  --muted: #9aa0ad;
+  --accent: #6c8cff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 32px 16px 64px;
+}
+
+header {
+  max-width: 960px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+}
+
+header p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.grid {
+  max-width: 960px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 20px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background 0.15s ease, transform 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.card:hover {
+  background: var(--surface-hover);
+  transform: translateY(-2px);
+}
+
+.card h2 {
+  margin: 4px 0;
+  font-size: 1.2rem;
+}
+
+.card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.thumb {
+  height: 100px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.snake-thumb {
+  background: linear-gradient(135deg, #2e7d32, #66bb6a);
+}
+
+.memory-thumb {
+  background: linear-gradient(135deg, #6a1b9a, #ab47bc);
+}
+
+footer {
+  max-width: 960px;
+  margin: 48px auto 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+footer code {
+  background: var(--surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
