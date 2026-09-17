@@ -10,6 +10,7 @@ https://ashtoashh.github.io/game-hub/
 
 - **Snake** — `games/snake/`
 - **Memory Match** — `games/memory/`
+- **패턴 인식 IQ 게임** (Pattern Recognition IQ Game) — `games/iq-pattern/`
 
 ## Run locally
 

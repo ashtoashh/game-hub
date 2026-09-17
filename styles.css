@@ -85,6 +85,10 @@ header p {
   background: linear-gradient(135deg, #6a1b9a, #ab47bc);
 }
 
+.iq-thumb {
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+}
+
 footer {
   max-width: 960px;
   margin: 48px auto 0;

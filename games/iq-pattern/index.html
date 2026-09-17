@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>패턴 인식 IQ 게임</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f4f4f2;
+  --surface:#ffffff;
+  --text:#111111;
+  --sub:#888;
+  --border:#e2e2de;
+  --accent:#2563eb;
+  --accent-light:#eff4ff;
+  --correct:#16a34a;
+  --wrong:#dc2626;
+  --warn:#d97706;
+}
+
+body{
+  font-family:'Pretendard','Apple SD Gothic Neo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:32px 16px 60px;
+}
+
+#back-link{
+  width:100%;max-width:540px;
+  display:block;
+  font-size:13px;
+  color:var(--sub);
+  text-decoration:none;
+  margin-bottom:16px;
+}
+#back-link:hover{color:var(--text);}
+
+/* ── 헤더 ── */
+header{width:100%;max-width:540px;display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+header h1{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);}
+#level-badge{font-size:12px;font-weight:600;background:var(--accent-light);color:var(--accent);padding:4px 12px;border-radius:20px;}
+
+/* ── 진행 바 ── */
+#progress-wrap{width:100%;max-width:540px;margin-bottom:24px;}
+#progress-info{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:6px;}
+#progress-bar-bg{width:100%;height:4px;background:var(--border);border-radius:2px;}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .3s ease;}
+
+/* ── 스코어 칩 ── */
+#score-row{width:100%;max-width:540px;display:flex;gap:10px;margin-bottom:24px;}
+.chip{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;}
+.chip .c-label{font-size:11px;color:var(--sub);}
+.chip .c-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;}
+
+/* ── 문제 카드 ── */
+#question-card{
+  width:100%;max-width:540px;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  padding:28px 24px 24px;
+  margin-bottom:16px;
+}
+
+#q-type-label{font-size:11px;color:var(--sub);font-weight:500;letter-spacing:.06em;margin-bottom:16px;}
+
+/* 수열 */
+#sequence-display{
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.seq-num{
+  width:52px;height:52px;
+  border-radius:10px;
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:700;
+}
+.seq-num.blank{
+  background:var(--accent-light);
+  border-color:var(--accent);
+  color:var(--accent);
+  font-size:26px;
+}
+
+/* 도형 매트릭스 */
+#matrix-display{
+  display:grid;
+  gap:8px;
+  margin:0 auto 8px;
+  justify-content:center;
+}
+.cell{
+  border-radius:8px;
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+}
+.cell.blank{
+  background:var(--accent-light);
+  border:2px dashed var(--accent);
+}
+.cell svg{display:block;}
+
+/* 힌트 */
+#hint-text{font-size:13px;color:var(--sub);text-align:center;min-height:18px;margin-top:4px;}
+
+/* ── 보기 ── */
+#choices{
+  width:100%;max-width:540px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:16px;
+}
+.choice-btn{
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  padding:14px 10px;
+  font-family:inherit;
+  font-size:15px;
+  font-weight:600;
+  color:var(--text);
+  cursor:pointer;
+  transition:background .1s,border-color .1s,transform .08s;
+  display:flex;align-items:center;justify-content:center;
+  min-height:60px;
+}
+.choice-btn:hover{background:var(--accent-light);border-color:var(--accent);}
+.choice-btn:active{transform:scale(.97);}
+.choice-btn.correct{background:#dcfce7;border-color:var(--correct);color:var(--correct);}
+.choice-btn.wrong  {background:#fee2e2;border-color:var(--wrong);  color:var(--wrong);}
+.choice-btn svg{display:block;}
+
+/* ── 피드백 ── */
+#feedback{
+  width:100%;max-width:540px;
+  min-height:44px;
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:500;
+  margin-bottom:16px;
+  opacity:0;transition:opacity .2s;
+}
+#feedback.show{opacity:1;}
+#feedback.correct{background:#dcfce7;color:var(--correct);}
+#feedback.wrong  {background:#fee2e2;color:var(--wrong);}
+
+/* ── 타이머 ── */
+#timer-wrap{width:100%;max-width:540px;display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+#timer-bar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;}
+#timer-bar{height:5px;background:var(--accent);border-radius:3px;transition:width .1s linear,background .3s;}
+#timer-label{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums;min-width:32px;text-align:right;}
+
+/* ── 결과 화면 ── */
+#result-screen{
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
+  width:100%;max-width:540px;
+}
+#result-screen.show{display:flex;}
+#game-wrap.hidden{display:none;}
+
+.result-card{
+  width:100%;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  padding:28px 24px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.r-big{font-size:48px;font-weight:700;letter-spacing:-.03em;text-align:center;}
+.r-label{font-size:13px;color:var(--sub);text-align:center;}
+.r-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.r-stat{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.r-stat .rv{font-size:20px;font-weight:700;}
+.r-stat .rl{font-size:11px;color:var(--sub);}
+
+.grade-badge{
+  font-size:13px;font-weight:600;
+  padding:6px 20px;border-radius:20px;
+  background:var(--accent-light);color:var(--accent);
+  text-align:center;margin:0 auto;
+}
+
+#btn-restart{
+  width:100%;padding:15px;
+  background:var(--accent);color:#fff;
+  border:none;border-radius:12px;
+  font-family:inherit;font-size:15px;font-weight:600;
+  cursor:pointer;transition:opacity .1s;
+}
+#btn-restart:active{opacity:.8;}
+
+/* 스타트 화면 */
+#start-screen{
+  display:flex;flex-direction:column;align-items:center;gap:24px;
+  width:100%;max-width:540px;
+}
+#start-screen.hidden{display:none;}
+
+.start-card{
+  width:100%;background:var(--surface);
+  border:1.5px solid var(--border);border-radius:16px;
+  padding:32px 28px;text-align:center;
+  display:flex;flex-direction:column;gap:12px;
+}
+.start-card h2{font-size:24px;font-weight:700;}
+.start-card p{font-size:14px;color:var(--sub);line-height:1.7;}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;}
+.info-item{background:var(--bg);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:4px;}
+.info-item .i-label{font-size:11px;color:var(--sub);}
+.info-item .i-val{font-size:13px;font-weight:600;}
+
+#btn-start{
+  width:100%;padding:16px;
+  background:var(--accent);color:#fff;
+  border:none;border-radius:12px;
+  font-family:inherit;font-size:16px;font-weight:600;
+  cursor:pointer;transition:opacity .1s;
+}
+#btn-start:active{opacity:.8;}
+
+@media(prefers-reduced-motion:reduce){
+  .choice-btn,.choice-btn:active,#progress-bar,#timer-bar,#feedback{transition:none;}
+}
+</style>
+</head>
+<body>
+
+<a id="back-link" href="../../">← Game Hub</a>
+
+<!-- 스타트 화면 -->
+<div id="start-screen">
+  <div class="start-card">
+    <div style="font-size:40px">🧩</div>
+    <h2>패턴 인식 IQ 게임</h2>
+    <p>수열 규칙과 도형 패턴을 찾아내세요.<br>정답을 맞힐수록 난이도가 올라갑니다.</p>
+    <div class="info-grid">
+      <div class="info-item"><span class="i-label">문제 수</span><span class="i-val">10문제</span></div>
+      <div class="info-item"><span class="i-label">제한 시간</span><span class="i-val">문제당 20초</span></div>
+      <div class="info-item"><span class="i-label">유형</span><span class="i-val">수열 + 도형</span></div>
+      <div class="info-item"><span class="i-label">난이도</span><span class="i-val">자동 상승</span></div>
+    </div>
+  </div>
+  <button id="btn-start" onclick="startGame()">게임 시작</button>
+</div>
+
+<!-- 게임 화면 -->
+<div id="game-wrap" class="hidden">
+  <header>
+    <h1>패턴 인식</h1>
+    <span id="level-badge">레벨 1</span>
+  </header>
+
+  <div id="progress-wrap">
+    <div id="progress-info">
+      <span id="q-counter">1 / 10</span>
+      <span id="score-label">점수 0</span>
+    </div>
+    <div id="progress-bar-bg"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+
+  <div id="score-row">
+    <div class="chip"><span class="c-label">정답</span><span class="c-val" id="correct-count">0</span></div>
+    <div class="chip"><span class="c-label">연속</span><span class="c-val" id="streak-count">0 🔥</span></div>
+    <div class="chip"><span class="c-label">점수</span><span class="c-val" id="score-disp">0</span></div>
+  </div>
+
+  <div id="timer-wrap">
+    <div id="timer-bar-bg"><div id="timer-bar" style="width:100%"></div></div>
+    <span id="timer-label">20s</span>
+  </div>
+
+  <div id="question-card">
+    <div id="q-type-label">— 수열 —</div>
+    <div id="sequence-display"></div>
+    <div id="matrix-display" style="display:none"></div>
+    <div id="hint-text"></div>
+  </div>
+
+  <div id="choices"></div>
+  <div id="feedback"></div>
+</div>
+
+<!-- 결과 화면 -->
+<div id="result-screen">
+  <div class="result-card">
+    <div class="r-label">최종 점수</div>
+    <div class="r-big" id="final-score">0</div>
+    <div class="grade-badge" id="grade-text"></div>
+    <div class="r-grid">
+      <div class="r-stat"><span class="rv" id="r-correct">0</span><span class="rl">정답</span></div>
+      <div class="r-stat"><span class="rv" id="r-acc">0%</span><span class="rl">정확도</span></div>
+      <div class="r-stat"><span class="rv" id="r-level">1</span><span class="rl">도달 레벨</span></div>
+    </div>
+  </div>
+  <button id="btn-restart" onclick="restartGame()">다시 도전</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   데이터: 수열 문제
+═══════════════════════════════════════════ */
+const SEQ_POOLS = {
+  1:[
+    {seq:[2,4,6,8,'?'],ans:10,choices:[10,12,9,11],rule:'2씩 증가'},
+    {seq:[1,3,5,7,'?'],ans:9,choices:[9,8,10,11],rule:'홀수 수열'},
+    {seq:[5,10,15,20,'?'],ans:25,choices:[25,30,22,24],rule:'5씩 증가'},
+    {seq:[3,6,9,12,'?'],ans:15,choices:[15,14,16,18],rule:'3씩 증가'},
+    {seq:[10,8,6,4,'?'],ans:2,choices:[2,3,1,0],rule:'2씩 감소'},
+  ],
+  2:[
+    {seq:[1,4,9,16,'?'],ans:25,choices:[25,20,30,36],rule:'제곱수'},
+    {seq:[2,4,8,16,'?'],ans:32,choices:[32,24,20,64],rule:'2배씩'},
+    {seq:[1,1,2,3,5,'?'],ans:8,choices:[8,7,9,6],rule:'피보나치'},
+    {seq:[100,50,25,'?'],ans:12.5,choices:['12.5','10','15','20'],rule:'절반씩'},
+    {seq:[3,6,12,24,'?'],ans:48,choices:[48,36,42,60],rule:'2배씩'},
+  ],
+  3:[
+    {seq:[1,3,7,15,'?'],ans:31,choices:[31,29,30,32],rule:'×2+1'},
+    {seq:[2,5,10,17,26,'?'],ans:37,choices:[37,35,38,40],rule:'n²+1'},
+    {seq:[1,8,27,64,'?'],ans:125,choices:[125,100,216,144],rule:'세제곱수'},
+    {seq:[0,1,3,6,10,'?'],ans:15,choices:[15,14,16,12],rule:'삼각수'},
+    {seq:[2,3,5,7,11,'?'],ans:13,choices:[13,12,14,15],rule:'소수 수열'},
+  ],
+};
+
+/* ═══════════════════════════════════════════
+   데이터: 도형 매트릭스 문제
+   3×3 그리드, shapes: circle square triangle diamond star
+═══════════════════════════════════════════ */
+function makeSVG(shape,size=36,fill='#2563eb',opacity=1){
+  const s=size,h=s/2,r=h-3;
+  const ops={
+    circle:`<circle cx="${h}" cy="${h}" r="${r}" fill="${fill}" opacity="${opacity}"/>`,
+    square:`<rect x="4" y="4" width="${s-8}" height="${s-8}" rx="3" fill="${fill}" opacity="${opacity}"/>`,
+    triangle:`<polygon points="${h},4 ${s-4},${s-4} 4,${s-4}" fill="${fill}" opacity="${opacity}"/>`,
+    diamond:`<polygon points="${h},3 ${s-3},${h} ${h},${s-3} 3,${h}" fill="${fill}" opacity="${opacity}"/>`,
+    star:`<polygon points="${h},3 ${h*1.3},${h*0.9} ${s-3},${h*0.9} ${h*1.1+4},${h*1.4} ${h*1.25},${s-3} ${h},${h*1.7} ${h*0.75},${s-3} ${h*0.9-4},${h*1.4} 3,${h*0.9} ${h*0.7},${h*0.9}" fill="${fill}" opacity="${opacity}"/>`,
+  };
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">${ops[shape]||''}</svg>`;
+}
+
+// 도형 퀴즈 풀 — grid: 9셀(마지막이 ?), answer: 정답 shape+color, choices: [{shape,color}×4]
+const COLORS=['#2563eb','#dc2626','#16a34a','#d97706'];
+const SHAPES=['circle','square','triangle','diamond','star'];
+
+function makeMatrixQ(level){
+  // 레벨에 따라 규칙 복잡도 증가
+  const palette=COLORS.slice(0,level===1?2:level===2?3:4);
+  const shapes=SHAPES.slice(0,level===1?3:level===2?4:5);
+
+  // 행 규칙: 같은 행은 shape 동일, 열 규칙: 같은 열은 color 동일
+  const rowShapes=[0,1,2].map(()=>shapes[Math.floor(Math.random()*shapes.length)]);
+  const colColors=[0,1,2].map(()=>palette[Math.floor(Math.random()*palette.length)]);
+
+  const grid=[];
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++)
+    grid.push({shape:rowShapes[r],color:colColors[c]});
+
+  const ans=grid[8];
+  // 오답 후보
+  const wrongs=[];
+  while(wrongs.length<3){
+    const s=shapes[Math.floor(Math.random()*shapes.length)];
+    const c=palette[Math.floor(Math.random()*palette.length)];
+    if((s!==ans.shape||c!==ans.color)&&!wrongs.some(w=>w.shape===s&&w.color===c))
+      wrongs.push({shape:s,color:c});
+  }
+  const choices=shuffle([ans,...wrongs]);
+  const gridCells=grid.slice(0,8).map(c=>({shape:c.shape,color:c.color}));
+  return{type:'matrix',grid:gridCells,answer:ans,choices,rule:'도형 패턴의 규칙을 찾아보세요'};
+}
+
+/* ═══════════════════════════════════════════
+   게임 상태
+═══════════════════════════════════════════ */
+const TOTAL_Q=10;
+const TIME_LIMIT=20;
+
+let state={
+  qIndex:0, score:0, correctCount:0, streak:0,
+  level:1, answered:false,
+  questions:[],
+  timerInterval:null, timeLeft:TIME_LIMIT,
+};
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
+
+function buildQuestions(){
+  const qs=[];
+  // 난이도 분배: 1~3레벨, 자동 상승
+  const levelMap=[1,1,1,2,2,2,3,3,3,3]; // 10문제
+  for(let i=0;i<TOTAL_Q;i++){
+    const lv=levelMap[i];
+    if(Math.random()<.5){
+      // 수열
+      const pool=SEQ_POOLS[lv];
+      const q=pool[Math.floor(Math.random()*pool.length)];
+      qs.push({type:'seq',...q,level:lv});
+    } else {
+      qs.push({...makeMatrixQ(lv),level:lv});
+    }
+  }
+  return qs;
+}
+
+/* ═══════════════════════════════════════════
+   DOM 헬퍼
+═══════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+
+function updateHUD(){
+  $('q-counter').textContent=`${state.qIndex+1} / ${TOTAL_Q}`;
+  $('score-label').textContent=`점수 ${state.score}`;
+  $('correct-count').textContent=state.correctCount;
+  $('streak-count').textContent=`${state.streak} 🔥`;
+  $('score-disp').textContent=state.score;
+  $('progress-bar').style.width=`${(state.qIndex/TOTAL_Q)*100}%`;
+  const lv=state.questions[state.qIndex]?.level||1;
+  $('level-badge').textContent=`레벨 ${lv}`;
+}
+
+/* ═══════════════════════════════════════════
+   타이머
+═══════════════════════════════════════════ */
+function startTimer(){
+  clearInterval(state.timerInterval);
+  state.timeLeft=TIME_LIMIT;
+  updateTimerUI();
+  state.timerInterval=setInterval(()=>{
+    state.timeLeft-=.1;
+    updateTimerUI();
+    if(state.timeLeft<=0){
+      clearInterval(state.timerInterval);
+      if(!state.answered) timeOut();
+    }
+  },100);
+}
+
+function updateTimerUI(){
+  const pct=Math.max(0,state.timeLeft/TIME_LIMIT*100);
+  $('timer-bar').style.width=pct+'%';
+  $('timer-bar').style.background=pct>50?'#2563eb':pct>25?'#d97706':'#dc2626';
+  $('timer-label').textContent=Math.ceil(state.timeLeft)+'s';
+}
+
+function timeOut(){
+  state.answered=true;
+  state.streak=0;
+  showFeedback(false,'⏰ 시간 초과!');
+  disableChoices();
+  setTimeout(nextQuestion,1400);
+}
+
+/* ═══════════════════════════════════════════
+   문제 렌더
+═══════════════════════════════════════════ */
+function renderQuestion(){
+  const q=state.questions[state.qIndex];
+  state.answered=false;
+  clearFeedback();
+  updateHUD();
+
+  if(q.type==='seq') renderSeq(q);
+  else renderMatrix(q);
+
+  $('hint-text').textContent=`💡 힌트: ${q.rule}`;
+  renderChoices(q);
+  startTimer();
+}
+
+function renderSeq(q){
+  $('q-type-label').textContent='— 수열 —';
+  $('matrix-display').style.display='none';
+  const sd=$('sequence-display');
+  sd.style.display='flex';
+  sd.innerHTML=q.seq.map(v=>`
+    <div class="seq-num ${v==='?'?'blank':''}">
+      ${v==='?'?'?':v}
+    </div>`).join('');
+}
+
+function renderMatrix(q){
+  $('q-type-label').textContent='— 도형 패턴 —';
+  $('sequence-display').style.display='none';
+  const md=$('matrix-display');
+  md.style.display='grid';
+  md.style.gridTemplateColumns='repeat(3,1fr)';
+  md.style.maxWidth='240px';
+  const cellSize=68;
+  md.innerHTML=q.grid.map(c=>`
+    <div class="cell" style="width:${cellSize}px;height:${cellSize}px;">
+      ${makeSVG(c.shape,40,c.color)}
+    </div>
+  `).join('')+`<div class="cell blank" style="width:${cellSize}px;height:${cellSize}px;">?</div>`;
+}
+
+function renderChoices(q){
+  const ch=$('choices');
+  if(q.type==='seq'){
+    ch.innerHTML=q.choices.map(c=>`
+      <button class="choice-btn" onclick="answer(this,'${c}','${q.ans}')">
+        ${c}
+      </button>`).join('');
+  } else {
+    ch.innerHTML=q.choices.map((c,i)=>`
+      <button class="choice-btn" data-idx="${i}" onclick="answerMatrix(this,${i})">
+        ${makeSVG(c.shape,40,c.color)}
+      </button>`).join('');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   정답 처리
+═══════════════════════════════════════════ */
+function answer(btn,chosen,correct){
+  if(state.answered)return;
+  state.answered=true;
+  clearInterval(state.timerInterval);
+  const ok=String(chosen)===String(correct);
+  processResult(btn,ok,correct,'seq');
+}
+
+function answerMatrix(btn,idx){
+  if(state.answered)return;
+  state.answered=true;
+  clearInterval(state.timerInterval);
+  const q=state.questions[state.qIndex];
+  const chosen=q.choices[idx];
+  const ok=chosen.shape===q.answer.shape&&chosen.color===q.answer.color;
+  processResult(btn,ok,null,'matrix',q.answer);
+}
+
+function processResult(btn,ok,correctVal,type,correctObj){
+  disableChoices();
+  if(ok){
+    btn.classList.add('correct');
+    state.correctCount++;
+    state.streak++;
+    const bonus=state.streak>=3?20:10;
+    state.score+=bonus*(state.questions[state.qIndex].level);
+    showFeedback(true,state.streak>=3?`🔥 ${state.streak}연속 정답! +${bonus*state.questions[state.qIndex].level}점`:`✅ 정답! +${bonus*state.questions[state.qIndex].level}점`);
+  } else {
+    btn.classList.add('wrong');
+    state.streak=0;
+    // 정답 표시
+    if(type==='seq') highlightCorrectSeq(correctVal);
+    else highlightCorrectMatrix(correctObj);
+    showFeedback(false,'❌ 오답');
+  }
+  updateHUD();
+  setTimeout(nextQuestion,1500);
+}
+
+function highlightCorrectSeq(val){
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    if(b.textContent.trim()===String(val)) b.classList.add('correct');
+  });
+}
+
+function highlightCorrectMatrix(obj){
+  const q=state.questions[state.qIndex];
+  document.querySelectorAll('.choice-btn').forEach((b,i)=>{
+    const c=q.choices[i];
+    if(c.shape===obj.shape&&c.color===obj.color) b.classList.add('correct');
+  });
+}
+
+function disableChoices(){
+  document.querySelectorAll('.choice-btn').forEach(b=>{b.onclick=null;b.style.cursor='default';});
+}
+
+function showFeedback(ok,msg){
+  const f=$('feedback');
+  f.textContent=msg;
+  f.className='show '+(ok?'correct':'wrong');
+}
+
+function clearFeedback(){
+  const f=$('feedback');
+  f.className='';
+  f.textContent='';
+}
+
+/* ═══════════════════════════════════════════
+   흐름
+═══════════════════════════════════════════ */
+function nextQuestion(){
+  state.qIndex++;
+  if(state.qIndex>=TOTAL_Q) endGame();
+  else renderQuestion();
+}
+
+function startGame(){
+  $('start-screen').classList.add('hidden');
+  $('result-screen').classList.remove('show');
+  $('game-wrap').classList.remove('hidden');
+
+  state={qIndex:0,score:0,correctCount:0,streak:0,level:1,answered:false,
+    questions:buildQuestions(),timerInterval:null,timeLeft:TIME_LIMIT};
+
+  renderQuestion();
+}
+
+function endGame(){
+  clearInterval(state.timerInterval);
+  $('game-wrap').classList.add('hidden');
+  const rs=$('result-screen');
+  rs.classList.add('show');
+
+  $('final-score').textContent=state.score;
+  $('r-correct').textContent=`${state.correctCount}/${TOTAL_Q}`;
+  $('r-acc').textContent=Math.round(state.correctCount/TOTAL_Q*100)+'%';
+  $('r-level').textContent=state.questions[TOTAL_Q-1]?.level||1;
+
+  const pct=state.correctCount/TOTAL_Q;
+  let grade='';
+  if(pct>=.9)grade='🏆 천재 수준';
+  else if(pct>=.7)grade='⭐ 우수';
+  else if(pct>=.5)grade='👍 보통';
+  else grade='💪 계속 도전!';
+  $('grade-text').textContent=grade;
+}
+
+function restartGame(){
+  $('result-screen').classList.remove('show');
+  startGame();
+}
+</script>
+</body>
+</html>
