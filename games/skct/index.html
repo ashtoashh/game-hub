@@ -116,10 +116,31 @@ table.data-table th{background:var(--bg);font-weight:600;}
 .area-row .a-name{font-weight:600;}
 .area-row .a-score{color:var(--sub);font-variant-numeric:tabular-nums;}
 
-#btn-restart,#btn-menu{width:100%;padding:15px;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .1s;}
+#btn-restart,#btn-menu,#btn-history,#btn-close-history{width:100%;padding:15px;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .1s;}
 #btn-restart{background:var(--accent);color:#fff;}
-#btn-menu{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
-#btn-restart:active,#btn-menu:active{opacity:.8;}
+#btn-menu,#btn-history,#btn-close-history{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
+#btn-restart:active,#btn-menu:active,#btn-history:active,#btn-close-history:active{opacity:.8;}
+
+#btn-clear-history{width:100%;padding:13px;background:#fee2e2;color:var(--wrong);border:1.5px solid var(--wrong);border-radius:12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .1s;}
+#btn-clear-history:active{opacity:.8;}
+
+#history-screen{display:none;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:560px;}
+#history-screen.show{display:flex;}
+
+.section-title{width:100%;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;}
+
+.history-list,.wrong-notebook{width:100%;display:flex;flex-direction:column;gap:8px;}
+.history-item{background:var(--bg);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;}
+.history-item .h-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;}
+.history-item .h-sub{font-size:11px;color:var(--sub);}
+.history-empty{width:100%;font-size:13px;color:var(--sub);text-align:center;padding:16px 0;}
+
+.wrong-item{background:var(--bg);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13px;}
+.wrong-item .w-area{font-size:11px;font-weight:700;color:var(--accent);}
+.wrong-item .w-q{font-weight:600;line-height:1.5;}
+.wrong-item .w-ans{font-size:12px;color:var(--sub);}
+.wrong-item .w-ans b{color:var(--wrong);}
+.wrong-item .w-explain{font-size:12px;line-height:1.6;background:var(--accent-light);border-radius:8px;padding:8px 10px;color:var(--text);}
 
 #start-screen{display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:560px;}
 #start-screen.hidden{display:none;}
@@ -153,6 +174,21 @@ table.data-table th{background:var(--bg);font-weight:600;}
     <p>SK그룹 SKCT 인지역량 유형(언어이해·자료해석·창의수리·언어추리·수열추리)을 본떠 만든 연습 문제입니다.<br>실제 기출문항이 아닌 자체 제작 문항입니다.</p>
   </div>
   <div class="mode-grid" id="mode-grid"></div>
+  <button id="btn-history" onclick="showHistory()">📚 학습 기록 보기</button>
+</div>
+
+<!-- 학습 기록 화면 -->
+<div id="history-screen">
+  <div class="result-card">
+    <div class="section-title">세션 기록</div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+  <div class="result-card">
+    <div class="section-title">오답 노트</div>
+    <div class="wrong-notebook" id="wrong-notebook"></div>
+  </div>
+  <button id="btn-close-history" onclick="closeHistory()">메뉴로 돌아가기</button>
+  <button id="btn-clear-history" onclick="clearHistory()">기록 전체 삭제</button>
 </div>
 
 <!-- 게임 화면 -->
@@ -348,10 +384,11 @@ seq:[
 ═══════════════════════════════════════════ */
 let state={
   mode:null, qIndex:0, score:0, correctCount:0, streak:0, answered:false,
-  questions:[], stats:{}, timerInterval:null, timeLeft:0,
+  questions:[], stats:{}, wrongItems:[], timerInterval:null, timeLeft:0,
 };
 
 const $=id=>document.getElementById(id);
+const HISTORY_KEY='skct_study_history';
 
 function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
 
@@ -434,6 +471,7 @@ function timeOut(){
   highlightCorrect();
   disableChoices();
   const q=state.questions[state.qIndex];
+  recordWrong(q,null);
   showExplain(q);
   updateHUD();
 }
@@ -500,14 +538,28 @@ function answer(btn,chosen){
     state.streak=0;
     highlightCorrect();
     showFeedback(false,'❌ 오답');
+    recordWrong(q,chosen);
   }
   updateHUD();
+  showExplain(q);
+}
 
-  if(ok){
-    setTimeout(nextQuestion,1500);
-  } else {
-    showExplain(q);
-  }
+function getPrompt(q){
+  if(q.area==='verbal'||q.area==='data') return q.q;
+  if(q.area==='math') return q.text;
+  if(q.area==='logic') return q.statement;
+  if(q.area==='seq') return `수열: ${q.seq.join(', ')}`;
+  return '';
+}
+
+function recordWrong(q,chosen){
+  state.wrongItems.push({
+    area:q.area,
+    prompt:getPrompt(q),
+    chosen: chosen===null ? '(시간 초과)' : chosen,
+    answer:q.answer,
+    explain:q.explain,
+  });
 }
 
 function highlightCorrect(){
@@ -571,7 +623,7 @@ function startGame(mode){
   $('game-wrap').classList.remove('hidden');
 
   state={mode,qIndex:0,score:0,correctCount:0,streak:0,answered:false,
-    questions:buildQuestions(mode),stats:{},timerInterval:null,timeLeft:0};
+    questions:buildQuestions(mode),stats:{},wrongItems:[],timerInterval:null,timeLeft:0};
 
   renderQuestion();
 }
@@ -614,6 +666,82 @@ function endGame(){
       const s=state.stats[key];
       return `<div class="area-row"><span class="a-name">${AREA_INFO[key].icon} ${AREA_INFO[key].label}</span><span class="a-score">${s.correct} / ${s.total}</span></div>`;
     }).join('');
+
+  saveHistoryEntry({
+    ts:Date.now(), mode:state.mode, total,
+    correct:state.correctCount,
+    accuracy:Math.round(pct*100),
+    score:state.score,
+    areaStats:state.stats,
+    wrongItems:state.wrongItems,
+  });
+}
+
+/* ═══════════════════════════════════════════
+   학습 기록 (localStorage)
+═══════════════════════════════════════════ */
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+function saveHistoryEntry(entry){
+  const list=loadHistory();
+  list.push(entry);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(-50)));
+}
+
+function modeLabel(mode){
+  return mode==='all' ? '🧭 전체 모의고사' : `${AREA_INFO[mode].icon} ${AREA_INFO[mode].label}`;
+}
+
+function formatDate(ts){
+  const d=new Date(ts);
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function showHistory(){
+  $('start-screen').classList.add('hidden');
+  $('history-screen').classList.add('show');
+  renderHistoryScreen();
+}
+function closeHistory(){
+  $('history-screen').classList.remove('show');
+  $('start-screen').classList.remove('hidden');
+}
+function clearHistory(){
+  if(!confirm('학습 기록과 오답 노트를 모두 삭제할까요?')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistoryScreen();
+}
+
+function renderHistoryScreen(){
+  const history=loadHistory();
+
+  const listEl=$('history-list');
+  if(history.length===0){
+    listEl.innerHTML='<div class="history-empty">아직 완료한 모의고사가 없습니다.</div>';
+  } else {
+    listEl.innerHTML=[...history].reverse().map(h=>`
+      <div class="history-item">
+        <div class="h-top"><span>${modeLabel(h.mode)}</span><span>${h.score}점</span></div>
+        <div class="h-sub">${formatDate(h.ts)} · 정답 ${h.correct}/${h.total} · 정확도 ${h.accuracy}%</div>
+      </div>`).join('');
+  }
+
+  const wrongEl=$('wrong-notebook');
+  const allWrong=history.flatMap(h=>h.wrongItems||[]);
+  if(allWrong.length===0){
+    wrongEl.innerHTML='<div class="history-empty">아직 기록된 오답이 없습니다.</div>';
+  } else {
+    wrongEl.innerHTML=[...allWrong].reverse().slice(0,30).map(w=>`
+      <div class="wrong-item">
+        <span class="w-area">${AREA_INFO[w.area].icon} ${AREA_INFO[w.area].label}</span>
+        <span class="w-q">${w.prompt}</span>
+        <span class="w-ans">내 답: <b>${w.chosen}</b> · 정답: ${w.answer}</span>
+        <span class="w-explain">💡 ${w.explain}</span>
+      </div>`).join('');
+  }
 }
 </script>
 </body>
