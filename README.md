@@ -11,6 +11,7 @@ https://ashtoashh.github.io/game-hub/
 - **Snake** — `games/snake/`
 - **Memory Match** — `games/memory/`
 - **패턴 인식 IQ 게임** (Pattern Recognition IQ Game) — `games/iq-pattern/`
+- **적성검사 실전 연습** (SKCT-style aptitude test practice) — `games/skct/`
 
 ## Run locally
 

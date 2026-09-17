@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>적성검사 실전 연습</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f4f4f2;
+  --surface:#ffffff;
+  --text:#111111;
+  --sub:#888;
+  --border:#e2e2de;
+  --accent:#2563eb;
+  --accent-light:#eff4ff;
+  --correct:#16a34a;
+  --wrong:#dc2626;
+  --warn:#d97706;
+}
+
+body{
+  font-family:'Pretendard','Apple SD Gothic Neo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:32px 16px 60px;
+}
+
+#back-link{width:100%;max-width:560px;display:block;font-size:13px;color:var(--sub);text-decoration:none;margin-bottom:16px;}
+#back-link:hover{color:var(--text);}
+
+header{width:100%;max-width:560px;display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+header h1{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);}
+#area-badge{font-size:12px;font-weight:600;background:var(--accent-light);color:var(--accent);padding:4px 12px;border-radius:20px;}
+
+#progress-wrap{width:100%;max-width:560px;margin-bottom:24px;}
+#progress-info{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:6px;}
+#progress-bar-bg{width:100%;height:4px;background:var(--border);border-radius:2px;}
+#progress-bar{height:4px;background:var(--accent);border-radius:2px;transition:width .3s ease;}
+
+#score-row{width:100%;max-width:560px;display:flex;gap:10px;margin-bottom:24px;}
+.chip{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;}
+.chip .c-label{font-size:11px;color:var(--sub);}
+.chip .c-val{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;}
+
+#question-card{width:100%;max-width:560px;background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:26px 24px 22px;margin-bottom:16px;}
+#q-type-label{font-size:11px;color:var(--sub);font-weight:500;letter-spacing:.06em;margin-bottom:16px;}
+
+.passage{background:var(--bg);border-radius:10px;padding:16px;font-size:14px;line-height:1.75;margin-bottom:14px;}
+.word-text{font-size:15px;line-height:1.85;margin-bottom:4px;text-align:center;}
+.q-text{font-size:15px;font-weight:600;text-align:center;margin:4px 0 2px;}
+
+table.data-table{width:100%;border-collapse:collapse;margin-bottom:14px;}
+table.data-table th,table.data-table td{border:1px solid var(--border);padding:8px 6px;font-size:13px;text-align:center;}
+table.data-table th{background:var(--bg);font-weight:600;}
+
+.premise-box{background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;flex-direction:column;gap:6px;}
+.premise{font-size:14px;position:relative;padding-left:14px;}
+.premise::before{content:'•';position:absolute;left:0;color:var(--accent);}
+
+.seq-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.seq-num{width:52px;height:52px;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;}
+.seq-num.blank{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-size:24px;}
+
+#hint-text{font-size:12px;color:var(--sub);text-align:center;min-height:16px;margin-top:6px;}
+
+#choices{width:100%;max-width:560px;display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.choice-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;font-family:inherit;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;text-align:left;transition:background .1s,border-color .1s,transform .08s;}
+.choice-btn:hover{background:var(--accent-light);border-color:var(--accent);}
+.choice-btn:active{transform:scale(.98);}
+.choice-btn.correct{background:#dcfce7;border-color:var(--correct);color:var(--correct);font-weight:600;}
+.choice-btn.wrong{background:#fee2e2;border-color:var(--wrong);color:var(--wrong);font-weight:600;}
+
+#feedback{width:100%;max-width:560px;min-height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;margin-bottom:16px;opacity:0;transition:opacity .2s;}
+#feedback.show{opacity:1;}
+#feedback.correct{background:#dcfce7;color:var(--correct);}
+#feedback.wrong{background:#fee2e2;color:var(--wrong);}
+
+#timer-wrap{width:100%;max-width:560px;display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+#timer-bar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;}
+#timer-bar{height:5px;background:var(--accent);border-radius:3px;transition:width .1s linear,background .3s;}
+#timer-label{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums;min-width:32px;text-align:right;}
+
+#result-screen{display:none;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:560px;}
+#result-screen.show{display:flex;}
+#game-wrap.hidden{display:none;}
+
+.result-card{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:16px;}
+.r-big{font-size:48px;font-weight:700;letter-spacing:-.03em;text-align:center;}
+.r-label{font-size:13px;color:var(--sub);text-align:center;}
+.r-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.r-stat{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.r-stat .rv{font-size:20px;font-weight:700;}
+.r-stat .rl{font-size:11px;color:var(--sub);}
+
+.grade-badge{font-size:13px;font-weight:600;padding:6px 20px;border-radius:20px;background:var(--accent-light);color:var(--accent);text-align:center;margin:0 auto;}
+
+.area-breakdown{display:flex;flex-direction:column;gap:8px;}
+.area-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:8px;padding:10px 14px;font-size:13px;}
+.area-row .a-name{font-weight:600;}
+.area-row .a-score{color:var(--sub);font-variant-numeric:tabular-nums;}
+
+#btn-restart,#btn-menu{width:100%;padding:15px;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .1s;}
+#btn-restart{background:var(--accent);color:#fff;}
+#btn-menu{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
+#btn-restart:active,#btn-menu:active{opacity:.8;}
+
+#start-screen{display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;max-width:560px;}
+#start-screen.hidden{display:none;}
+
+.start-card{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:30px 26px;text-align:center;display:flex;flex-direction:column;gap:10px;}
+.start-card h2{font-size:22px;font-weight:700;}
+.start-card p{font-size:13px;color:var(--sub);line-height:1.7;}
+
+.mode-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mode-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:16px 12px;font-family:inherit;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;transition:background .1s,border-color .1s;}
+.mode-btn:hover{background:var(--accent-light);border-color:var(--accent);}
+.mode-btn.full{grid-column:1 / -1;background:var(--accent);border-color:var(--accent);}
+.mode-btn.full .m-name,.mode-btn.full .m-sub{color:#fff;}
+.mode-btn .m-name{font-size:14px;font-weight:700;}
+.mode-btn .m-sub{font-size:11px;color:var(--sub);}
+
+@media(prefers-reduced-motion:reduce){
+  .choice-btn,#progress-bar,#timer-bar,#feedback{transition:none;}
+}
+</style>
+</head>
+<body>
+
+<a id="back-link" href="../../">← Game Hub</a>
+
+<!-- 시작 화면 -->
+<div id="start-screen">
+  <div class="start-card">
+    <div style="font-size:38px">💼</div>
+    <h2>적성검사 실전 연습</h2>
+    <p>SK그룹 SKCT 인지역량 유형(언어이해·자료해석·창의수리·언어추리·수열추리)을 본떠 만든 연습 문제입니다.<br>실제 기출문항이 아닌 자체 제작 문항입니다.</p>
+  </div>
+  <div class="mode-grid" id="mode-grid"></div>
+</div>
+
+<!-- 게임 화면 -->
+<div id="game-wrap" class="hidden">
+  <header>
+    <h1>적성검사 연습</h1>
+    <span id="area-badge">-</span>
+  </header>
+
+  <div id="progress-wrap">
+    <div id="progress-info">
+      <span id="q-counter">1 / 10</span>
+      <span id="score-label">점수 0</span>
+    </div>
+    <div id="progress-bar-bg"><div id="progress-bar" style="width:0%"></div></div>
+  </div>
+
+  <div id="score-row">
+    <div class="chip"><span class="c-label">정답</span><span class="c-val" id="correct-count">0</span></div>
+    <div class="chip"><span class="c-label">연속</span><span class="c-val" id="streak-count">0 🔥</span></div>
+    <div class="chip"><span class="c-label">점수</span><span class="c-val" id="score-disp">0</span></div>
+  </div>
+
+  <div id="timer-wrap">
+    <div id="timer-bar-bg"><div id="timer-bar" style="width:100%"></div></div>
+    <span id="timer-label">30s</span>
+  </div>
+
+  <div id="question-card">
+    <div id="q-type-label">—</div>
+    <div id="content-area"></div>
+    <div id="hint-text"></div>
+  </div>
+
+  <div id="choices"></div>
+  <div id="feedback"></div>
+</div>
+
+<!-- 결과 화면 -->
+<div id="result-screen">
+  <div class="result-card">
+    <div class="r-label">최종 점수</div>
+    <div class="r-big" id="final-score">0</div>
+    <div class="grade-badge" id="grade-text"></div>
+    <div class="r-grid">
+      <div class="r-stat"><span class="rv" id="r-correct">0</span><span class="rl">정답</span></div>
+      <div class="r-stat"><span class="rv" id="r-acc">0%</span><span class="rl">정확도</span></div>
+      <div class="r-stat"><span class="rv" id="r-total">0</span><span class="rl">총 문항</span></div>
+    </div>
+    <div class="area-breakdown" id="area-breakdown"></div>
+  </div>
+  <button id="btn-restart" onclick="restartSameMode()">같은 유형 다시</button>
+  <button id="btn-menu" onclick="backToMenu()">유형 선택으로</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   영역 정보
+═══════════════════════════════════════════ */
+const AREA_INFO = {
+  verbal:{label:'언어이해', icon:'📖', time:45},
+  data:  {label:'자료해석', icon:'📊', time:45},
+  math:  {label:'창의수리', icon:'🧮', time:35},
+  logic: {label:'언어추리', icon:'🔎', time:30},
+  seq:   {label:'수열추리', icon:'🔢', time:30},
+};
+const AREA_ORDER = ['verbal','data','math','logic','seq'];
+
+/* ═══════════════════════════════════════════
+   문제 풀 (자체 제작 연습 문항)
+═══════════════════════════════════════════ */
+const POOLS = {
+
+verbal:[
+  {passage:'인공지능 기술이 발전하면서 다양한 산업 분야에서 자동화가 빠르게 진행되고 있다. 그러나 일부 전문가들은 자동화가 확대될수록 인간의 판단이 필요한 영역의 가치가 오히려 커질 것이라고 예측한다.',
+   q:'윗글의 요지로 가장 적절한 것은?',
+   choices:['자동화가 확대되어도 인간 판단의 가치는 커질 것이다','자동화는 모든 산업 분야에서 동일한 속도로 진행된다','전문가들은 자동화 확대에 반대한다','인간의 판단은 더 이상 필요하지 않다'],
+   answer:'자동화가 확대되어도 인간 판단의 가치는 커질 것이다'},
+  {passage:'기업이 재택근무 제도를 도입한 이후 직원 만족도는 높아졌지만, 부서 간 협업 효율은 오히려 낮아졌다는 조사 결과가 나왔다. 이에 일부 기업은 주 2~3회 출근을 의무화하는 하이브리드 근무제를 도입하고 있다.',
+   q:'윗글에서 알 수 있는 내용으로 가장 적절한 것은?',
+   choices:['재택근무는 직원 만족도와 협업 효율을 모두 높였다','일부 기업은 하이브리드 근무제로 전환하고 있다','모든 기업이 재택근무를 폐지했다','협업 효율은 재택근무와 무관하다'],
+   answer:'일부 기업은 하이브리드 근무제로 전환하고 있다'},
+  {passage:'한 연구에 따르면 소비자는 가격이 지나치게 저렴한 제품에 오히려 품질을 의심하는 경향을 보인다. 반면 지나치게 비싼 제품에 대해서도 실제 가치보다 과대평가되었다고 느끼는 경우가 많다.',
+   q:'윗글의 내용과 일치하는 것은?',
+   choices:['소비자는 항상 저렴한 제품을 선호한다','가격은 품질 인식에 영향을 준다','비싼 제품은 항상 신뢰를 얻는다','소비자는 가격에 영향을 받지 않는다'],
+   answer:'가격은 품질 인식에 영향을 준다'},
+  {passage:"최근 한 조사에서 신입사원의 이직 이유 1위는 '낮은 연봉'이 아니라 '성장 기회의 부재'로 나타났다. 이는 기업이 보상 체계뿐 아니라 교육과 승진 경로 설계에도 신경 써야 함을 시사한다.",
+   q:'윗글이 시사하는 바로 가장 적절한 것은?',
+   choices:['연봉이 이직의 유일한 원인이다','기업은 성장 기회 설계에도 관심을 기울여야 한다','신입사원은 이직을 하지 않는다','보상 체계는 중요하지 않다'],
+   answer:'기업은 성장 기회 설계에도 관심을 기울여야 한다'},
+  {passage:'어떤 습관을 형성하는 데 걸리는 시간은 사람마다 다르지만, 평균적으로 66일 정도가 걸린다는 연구 결과가 있다. 다만 습관의 난이도와 반복 환경에 따라 그 기간은 크게 달라질 수 있다.',
+   q:'윗글의 내용과 다른 것은?',
+   choices:['습관 형성 기간은 평균 66일이다','습관 형성 기간은 사람마다 같다','습관의 난이도가 형성 기간에 영향을 준다','반복 환경이 습관 형성에 영향을 준다'],
+   answer:'습관 형성 기간은 사람마다 같다'},
+  {passage:'온라인 쇼핑몰의 리뷰 개수가 많을수록 구매 전환율이 높아지는 경향이 있다. 그러나 평점이 지나치게 높기만 한 경우 오히려 신뢰도가 낮아진다는 연구도 있다.',
+   q:'윗글에서 추론할 수 있는 것은?',
+   choices:['리뷰가 많을수록 무조건 신뢰도가 낮아진다','적당히 낮은 평점이 섞여 있으면 신뢰도가 높아질 수 있다','평점은 구매 전환율과 무관하다','리뷰 개수는 구매에 영향이 없다'],
+   answer:'적당히 낮은 평점이 섞여 있으면 신뢰도가 높아질 수 있다'},
+],
+
+data:[
+  {table:{headers:['연도','매출액(억원)'],rows:[['2022','120'],['2023','150'],['2024','180']]},
+   q:'2023년 매출액의 전년 대비 증가율은 약 몇 %인가?',
+   choices:['25','20','30','15'], answer:'25'},
+  {table:{headers:['부서','인원(명)'],rows:[['영업','40'],['개발','65'],['인사','15'],['총무','20']]},
+   q:'개발 부서 인원이 전체 인원에서 차지하는 비중은 약 몇 %인가? (전체 140명)',
+   choices:['46','35','50','60'], answer:'46'},
+  {table:{headers:['제품','판매량(개)'],rows:[['A','320'],['B','480'],['C','200']]},
+   q:'B 제품의 판매량은 C 제품의 몇 배인가?',
+   choices:['2.4','1.5','3','2'], answer:'2.4'},
+  {table:{headers:['월','방문자 수(명)'],rows:[['1월','800'],['2월','950'],['3월','1,100']]},
+   q:'3월 방문자 수는 1월 대비 몇 명 증가했는가?',
+   choices:['300','150','250','350'], answer:'300'},
+  {table:{headers:['지역','매장 수'],rows:[['서울','12'],['부산','7'],['대구','5'],['인천','6']]},
+   q:'서울 매장 수가 전체 매장 수(30개)에서 차지하는 비중은 약 몇 %인가?',
+   choices:['40','35','45','30'], answer:'40'},
+],
+
+math:[
+  {text:'시속 60km로 달리는 자동차가 150km를 가는 데 걸리는 시간은?',
+   choices:['2시간 30분','2시간','3시간','1시간 30분'], answer:'2시간 30분'},
+  {text:'농도 20%의 소금물 200g에 물 50g을 추가하면 농도는 몇 %가 되는가?',
+   choices:['16','20','14','18'], answer:'16'},
+  {text:'1부터 20까지의 자연수 중 3의 배수의 개수는?',
+   choices:['6','7','5','8'], answer:'6'},
+  {text:'A와 B 두 사람이 함께 일하면 6일이 걸리는 일을 A 혼자 하면 10일이 걸린다. B 혼자 하면 며칠이 걸리는가?',
+   choices:['15','12','20','18'], answer:'15'},
+  {text:'주사위를 두 번 던져서 나온 눈의 합이 7이 될 경우의 수는?',
+   choices:['6','5','7','4'], answer:'6'},
+  {text:'원가 8,000원인 물건에 25% 이익을 붙여 정가를 정했다. 정가는 얼마인가?',
+   choices:['10,000원','9,000원','11,000원','9,500원'], answer:'10,000원'},
+],
+
+logic:[
+  {premises:['모든 사원은 신입 교육을 받는다.','철수는 사원이다.'], statement:'철수는 신입 교육을 받는다.',
+   choices:['참','거짓','알 수 없음'], answer:'참'},
+  {premises:['A는 B보다 크다.','B는 C보다 크다.'], statement:'C는 A보다 크다.',
+   choices:['참','거짓','알 수 없음'], answer:'거짓'},
+  {premises:['비가 오면 우산을 챙긴다.','오늘은 우산을 챙기지 않았다.'], statement:'오늘은 비가 오지 않았다.',
+   choices:['참','거짓','알 수 없음'], answer:'참'},
+  {premises:['어떤 학생은 축구를 좋아한다.','민수는 학생이다.'], statement:'민수는 축구를 좋아한다.',
+   choices:['참','거짓','알 수 없음'], answer:'알 수 없음'},
+  {premises:['과장 이상만 회의에 참석한다.','영희는 대리이다.'], statement:'영희는 회의에 참석하지 않는다.',
+   choices:['참','거짓','알 수 없음'], answer:'참'},
+  {premises:['빨간 공은 모두 상자 안에 있다.','이 공은 상자 밖에 있다.'], statement:'이 공은 빨간 공이 아니다.',
+   choices:['참','거짓','알 수 없음'], answer:'참'},
+],
+
+seq:[
+  {seq:[3,7,15,31,'?'], choices:['63','62','64','61'], answer:'63'},
+  {seq:[2,6,12,20,'?'], choices:['30','28','32','24'], answer:'30'},
+  {seq:[1,2,4,7,11,'?'], choices:['16','15','17','18'], answer:'16'},
+  {seq:[81,27,9,3,'?'], choices:['1','2','0','3'], answer:'1'},
+  {seq:[4,9,19,39,'?'], choices:['79','78','80','77'], answer:'79'},
+  {seq:[1,4,10,22,'?'], choices:['46','44','48','45'], answer:'46'},
+],
+
+};
+
+/* ═══════════════════════════════════════════
+   게임 상태
+═══════════════════════════════════════════ */
+let state={
+  mode:null, qIndex:0, score:0, correctCount:0, streak:0, answered:false,
+  questions:[], stats:{}, timerInterval:null, timeLeft:0,
+};
+
+const $=id=>document.getElementById(id);
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
+
+/* ═══════════════════════════════════════════
+   시작 화면 / 모드 구성
+═══════════════════════════════════════════ */
+function buildModeGrid(){
+  const grid=$('mode-grid');
+  let html=`<button class="mode-btn full" onclick="startGame('all')">
+    <span class="m-name">🧭 전체 모의고사</span>
+    <span class="m-sub">5개 영역 · 총 10문항</span>
+  </button>`;
+  AREA_ORDER.forEach(key=>{
+    const a=AREA_INFO[key];
+    html+=`<button class="mode-btn" onclick="startGame('${key}')">
+      <span class="m-name">${a.icon} ${a.label}</span>
+      <span class="m-sub">${POOLS[key].length}문항 · 문항당 ${a.time}초</span>
+    </button>`;
+  });
+  grid.innerHTML=html;
+}
+buildModeGrid();
+
+function buildQuestions(mode){
+  let qs=[];
+  if(mode==='all'){
+    AREA_ORDER.forEach(key=>{
+      const picks=shuffle(POOLS[key]).slice(0,2);
+      picks.forEach(p=>qs.push({...p, area:key}));
+    });
+    qs=shuffle(qs);
+  } else {
+    qs=shuffle(POOLS[mode]).map(p=>({...p, area:mode}));
+  }
+  return qs;
+}
+
+/* ═══════════════════════════════════════════
+   HUD
+═══════════════════════════════════════════ */
+function updateHUD(){
+  const total=state.questions.length;
+  $('q-counter').textContent=`${state.qIndex+1} / ${total}`;
+  $('score-label').textContent=`점수 ${state.score}`;
+  $('correct-count').textContent=state.correctCount;
+  $('streak-count').textContent=`${state.streak} 🔥`;
+  $('score-disp').textContent=state.score;
+  $('progress-bar').style.width=`${(state.qIndex/total)*100}%`;
+  const area=state.questions[state.qIndex]?.area;
+  $('area-badge').textContent=area?AREA_INFO[area].label:'-';
+}
+
+/* ═══════════════════════════════════════════
+   타이머
+═══════════════════════════════════════════ */
+function startTimer(limit){
+  clearInterval(state.timerInterval);
+  state.timeLeft=limit;
+  updateTimerUI(limit);
+  state.timerInterval=setInterval(()=>{
+    state.timeLeft-=.1;
+    updateTimerUI(limit);
+    if(state.timeLeft<=0){
+      clearInterval(state.timerInterval);
+      if(!state.answered) timeOut();
+    }
+  },100);
+}
+function updateTimerUI(limit){
+  const pct=Math.max(0,state.timeLeft/limit*100);
+  $('timer-bar').style.width=pct+'%';
+  $('timer-bar').style.background=pct>50?'#2563eb':pct>25?'#d97706':'#dc2626';
+  $('timer-label').textContent=Math.ceil(state.timeLeft)+'s';
+}
+function timeOut(){
+  state.answered=true;
+  state.streak=0;
+  recordStat(false);
+  showFeedback(false,'⏰ 시간 초과!');
+  highlightCorrect();
+  disableChoices();
+  setTimeout(nextQuestion,1400);
+}
+
+/* ═══════════════════════════════════════════
+   문제 렌더
+═══════════════════════════════════════════ */
+function renderQuestion(){
+  const q=state.questions[state.qIndex];
+  state.answered=false;
+  clearFeedback();
+  updateHUD();
+
+  const typeLabels={verbal:'— 언어이해 —',data:'— 자료해석 —',math:'— 창의수리 —',logic:'— 언어추리 —',seq:'— 수열추리 —'};
+  $('q-type-label').textContent=typeLabels[q.area];
+
+  const content=$('content-area');
+  if(q.area==='verbal'){
+    content.innerHTML=`<div class="passage">${q.passage}</div><div class="q-text">${q.q}</div>`;
+  } else if(q.area==='data'){
+    const rows=q.table.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('');
+    content.innerHTML=`<table class="data-table"><thead><tr>${q.table.headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><div class="q-text">${q.q}</div>`;
+  } else if(q.area==='math'){
+    content.innerHTML=`<div class="word-text">${q.text}</div>`;
+  } else if(q.area==='logic'){
+    content.innerHTML=`<div class="premise-box">${q.premises.map(p=>`<div class="premise">${p}</div>`).join('')}</div><div class="q-text">다음 문장은 참인가, 거짓인가, 알 수 없는가?<br><strong>${q.statement}</strong></div>`;
+  } else if(q.area==='seq'){
+    content.innerHTML=`<div class="seq-row">${q.seq.map(v=>`<div class="seq-num ${v==='?'?'blank':''}">${v}</div>`).join('')}</div><div class="q-text">다음에 올 알맞은 숫자는?</div>`;
+  }
+
+  $('hint-text').textContent='';
+  renderChoices(q);
+  startTimer(AREA_INFO[q.area].time);
+}
+
+function renderChoices(q){
+  $('choices').innerHTML=q.choices.map(c=>
+    `<button class="choice-btn" onclick="answer(this,'${String(c).replace(/'/g,"\\'")}')">${c}</button>`
+  ).join('');
+}
+
+/* ═══════════════════════════════════════════
+   정답 처리
+═══════════════════════════════════════════ */
+function answer(btn,chosen){
+  if(state.answered)return;
+  state.answered=true;
+  clearInterval(state.timerInterval);
+  const q=state.questions[state.qIndex];
+  const ok=String(chosen)===String(q.answer);
+  disableChoices();
+  recordStat(ok);
+
+  if(ok){
+    btn.classList.add('correct');
+    state.correctCount++;
+    state.streak++;
+    const bonus=(state.streak>=3?20:10);
+    state.score+=bonus;
+    showFeedback(true,state.streak>=3?`🔥 ${state.streak}연속 정답! +${bonus}점`:`✅ 정답! +${bonus}점`);
+  } else {
+    btn.classList.add('wrong');
+    state.streak=0;
+    highlightCorrect();
+    showFeedback(false,'❌ 오답');
+  }
+  updateHUD();
+  setTimeout(nextQuestion,1500);
+}
+
+function highlightCorrect(){
+  const q=state.questions[state.qIndex];
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    if(b.textContent.trim()===String(q.answer)) b.classList.add('correct');
+  });
+}
+
+function recordStat(ok){
+  const area=state.questions[state.qIndex].area;
+  if(!state.stats[area]) state.stats[area]={correct:0,total:0};
+  state.stats[area].total++;
+  if(ok) state.stats[area].correct++;
+}
+
+function disableChoices(){
+  document.querySelectorAll('.choice-btn').forEach(b=>{b.onclick=null;b.style.cursor='default';});
+}
+
+function showFeedback(ok,msg){
+  const f=$('feedback');
+  f.textContent=msg;
+  f.className='show '+(ok?'correct':'wrong');
+}
+function clearFeedback(){
+  const f=$('feedback');
+  f.className='';
+  f.textContent='';
+}
+
+/* ═══════════════════════════════════════════
+   흐름
+═══════════════════════════════════════════ */
+function nextQuestion(){
+  state.qIndex++;
+  if(state.qIndex>=state.questions.length) endGame();
+  else renderQuestion();
+}
+
+function startGame(mode){
+  $('start-screen').classList.add('hidden');
+  $('result-screen').classList.remove('show');
+  $('game-wrap').classList.remove('hidden');
+
+  state={mode,qIndex:0,score:0,correctCount:0,streak:0,answered:false,
+    questions:buildQuestions(mode),stats:{},timerInterval:null,timeLeft:0};
+
+  renderQuestion();
+}
+
+function restartSameMode(){
+  $('result-screen').classList.remove('show');
+  startGame(state.mode);
+}
+
+function backToMenu(){
+  clearInterval(state.timerInterval);
+  $('result-screen').classList.remove('show');
+  $('game-wrap').classList.add('hidden');
+  $('start-screen').classList.remove('hidden');
+}
+
+function endGame(){
+  clearInterval(state.timerInterval);
+  $('game-wrap').classList.add('hidden');
+  $('result-screen').classList.add('show');
+
+  const total=state.questions.length;
+  $('final-score').textContent=state.score;
+  $('r-correct').textContent=state.correctCount;
+  $('r-acc').textContent=Math.round(state.correctCount/total*100)+'%';
+  $('r-total').textContent=total;
+
+  const pct=state.correctCount/total;
+  let grade='';
+  if(pct>=.9)grade='🏆 최상위권';
+  else if(pct>=.7)grade='⭐ 우수';
+  else if(pct>=.5)grade='👍 보통';
+  else grade='💪 계속 연습!';
+  $('grade-text').textContent=grade;
+
+  const bd=$('area-breakdown');
+  bd.innerHTML=AREA_ORDER
+    .filter(key=>state.stats[key])
+    .map(key=>{
+      const s=state.stats[key];
+      return `<div class="area-row"><span class="a-name">${AREA_INFO[key].icon} ${AREA_INFO[key].label}</span><span class="a-score">${s.correct} / ${s.total}</span></div>`;
+    }).join('');
+}
+</script>
+</body>
+</html>

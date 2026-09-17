@@ -89,6 +89,10 @@ header p {
   background: linear-gradient(135deg, #1e40af, #2563eb);
 }
 
+.skct-thumb {
+  background: linear-gradient(135deg, #b45309, #f59e0b);
+}
+
 footer {
   max-width: 960px;
   margin: 48px auto 0;
